@@ -1,6 +1,6 @@
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.contrib.auth import authenticate
+from django.shortcuts import redirect, render
+from django.contrib.auth import authenticate,login
 
 
 def Login(request) : 
@@ -14,6 +14,11 @@ def Login(request) :
             error_message = "identifiants incorrects !"
             return render(request , "Users/Login.html", {'error_message' : error_message})
         else  : 
+            login(request,user)
+            
+            if user.is_superuser : 
+                return redirect('/admin/') #Rediriger l'utilisateur vers l'interface d'administration
+              
             return HttpResponse("Identifiants corrects !")
     
     return render(request, 'Users/Login.html' , {})
