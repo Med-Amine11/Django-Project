@@ -10,11 +10,7 @@ class Utilisateur(AbstractUser):
         ('étudiant', 'Etudiant'),
         ('formateur', 'Formateur'),
     ])
-    # Définir des related_name pour éviter les conflits avec les groupes et les permissions
-    groups = models.ManyToManyField(
-        'auth.Group', related_name='utilisateurs_set', blank=True)
-    user_permissions = models.ManyToManyField(
-        'auth.Permission', related_name='utilisateurs_set', blank=True)
+    
     def __str__(self):
         return f'{self.nom}  {self.prenom}'
 

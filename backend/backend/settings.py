@@ -81,9 +81,9 @@ DATABASES = {
         'ENGINE' : 'django.db.backends.mysql' , 
         'NAME' : 'dbmyapp' , 
         'USER' : 'root' , 
-        'PASSWORD': '123456' , 
+        'PASSWORD': '' , 
         'HOST' : '127.0.0.1' , 
-        'PORT' : '3308'
+        'PORT' : '3306'
     }
 }
 
@@ -132,3 +132,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'Users.Utilisateur'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
