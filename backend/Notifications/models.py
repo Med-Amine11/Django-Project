@@ -1,6 +1,6 @@
 from django.db import models
 from Users.models import Utilisateur 
-from Réservations.models import Reservation 
+from Reservations.models import Reservation 
 
 class Notification(models.Model):
     utilisateur = models.ForeignKey(
@@ -13,7 +13,7 @@ class Notification(models.Model):
         Reservation,
         on_delete=models.CASCADE,
         related_name='notifications',
-        verbose_name="Réservation"
+        verbose_name="Reservation"
     )
     type = models.CharField(max_length=100, verbose_name="Type de notification")
     message = models.TextField(verbose_name="Message")
@@ -21,4 +21,4 @@ class Notification(models.Model):
     
     
     def __str__(self):
-        return f"Notification à {self.utilisateur} pour la réservation {self.reservation.id}"
+        return f"Notification à {self.utilisateur.name} pour la réservation {self.reservation.id}"
