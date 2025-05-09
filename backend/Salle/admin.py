@@ -3,7 +3,7 @@ from .models import Salle , Equipement
 
 @admin.register(Salle) 
 class SallesAdmin(admin.ModelAdmin) : 
-    list_display = ['name'  , 'capacity']
+    list_display = ['name'  ,'slug' ,  'capacity']
 
 @admin.register(Equipement)
 class EquipementsAdmin(admin.ModelAdmin) : 

@@ -19,6 +19,6 @@ def Login(request) :
             if user.is_superuser : 
                 return redirect('/admin/') #Rediriger l'utilisateur vers l'interface d'administration
               
-            return HttpResponse("Identifiants corrects !")
+            return redirect('Salles')
     
     return render(request, 'Users/Login.html' , {})

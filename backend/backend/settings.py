@@ -135,3 +135,8 @@ AUTH_USER_MODEL = 'Users.Utilisateur'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+import os 
+MEDIA_URL  = '/media/' # préfixe de l'URL relative utilisé pour accéder à des fichiers /media/
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media") # emplacement physqiue ou les fichiers seront stockés media/
