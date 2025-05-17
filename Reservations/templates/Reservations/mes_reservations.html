@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Réservations{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5"> <h1 class="mb-4">Mes Réservations</h1>
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="d-flex justify-content-between mb-4">
+    <a href="{% url 'Consultation_salles' %}" class="btn btn-primary">Consulter les salles</a>
+    
+    {% if reservations_actives < 3 %}
+        <div class="alert alert-info mb-0 py-2">
+            <i class="fas fa-info-circle"></i> Vous avez {{ reservations_actives }} réservation(s) active(s) sur un maximum de 3 autorisées.
+        </div>
+    {% else %}
+        <div class="alert alert-warning mb-0 py-2">
+            <i class="fas fa-exclamation-circle"></i> Vous avez atteint le nombre maximum de réservations autorisées (3).
+        </div>
+    {% endif %}
+</div>
+
+{% if reservations %}
+    <div class="row">
+        {% for reservation in reservations %}
+            <div class="col-md-6 mb-4">
+                <div class="card {% if reservation.etat == 'annule' %}border-secondary{% elif reservation.etat == 'accepte' %}border-success{% elif reservation.etat == 'refuse' %}border-danger{% else %}border-warning{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ reservation.salle.name }}</h5>
+                        <span class="badge {% if reservation.etat == 'annule' %}bg-secondary{% elif reservation.etat == 'accepte' %}bg-success{% elif reservation.etat == 'refuse' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {{ reservation.get_etat_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Date:</strong> {{ reservation.date_res|date:"l d/m/Y" }}</p>
+                        <p><strong>Horaires:</strong> {{ reservation.heure_deb|time:"H:i" }} - {{ reservation.heure_fin|time:"H:i" }}</p>
+                        <p><strong>Motif:</strong> {{ reservation.motif }}</p>
+                        
+                        {% if reservation.etat == 'attente' or reservation.etat == 'accepte' %}
+                            <div class="d-flex mt-3">
+                                {% if reservation.peut_etre_modifiee %}
+                                    <a href="{% url 'modifier_reservation' reservation.id %}" class="btn btn-primary me-2">Modifier</a>
+                                {% endif %}
+                                
+                                {% if reservation.peut_etre_annulee %}
+                                    <a href="{% url 'annuler_reservation' reservation.id %}" class="btn btn-danger">Annuler</a>
+                                {% endif %}
+                                
+                                {% if not reservation.peut_etre_annulee and not reservation.peut_etre_modifiee %}
+                                    <p class="text-warning"><i class="fas fa-exclamation-circle"></i> Cette réservation ne peut plus être modifiée ou annulée car elle est prévue dans moins de 24h.</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        Vous n'avez pas encore de réservations. <a href="{% url 'Consultation_salles' %}">Voir les salles disponibles</a>
+    </div>
+{% endif %}
+</div>
+{% endblock %}
+
