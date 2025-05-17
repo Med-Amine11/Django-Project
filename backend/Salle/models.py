@@ -1,10 +1,10 @@
 import shutil
-from autoslug import AutoSlugField
-from django.db import models
+from autoslug import AutoSlugField # type: ignore
+from django.db import models # type: ignore
 import os
-from django.utils.text import slugify
-from django.db.models.signals import pre_save , post_delete , post_save
-from django.dispatch import receiver
+from django.utils.text import slugify # type: ignore
+from django.db.models.signals import pre_save , post_delete , post_save # type: ignore
+from django.dispatch import receiver # type: ignore
 
 def salle_image_path(instance, filename):
     return os.path.join('Salle', slugify(instance.name), filename)
