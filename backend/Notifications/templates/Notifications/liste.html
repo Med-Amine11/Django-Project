@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📬 Mes notifications</h2>
+
+    {% if notifications %}
+        <div class="list-group shadow-sm">
+            {% for notif in notifications %}
+                <div class="list-group-item list-group-item-action mb-2 border rounded">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 text-primary">
+                            <i class="fas fa-bell"></i> {{ notif.type }}
+                        </h5>
+                        <small class="text-muted">{{ notif.date_envoi|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ notif.message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Aucune notification pour le moment.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
