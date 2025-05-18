@@ -31,35 +31,28 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'Consultation_salles' %}">Gestion de Salles</a>
+            <div class="navbar-brand">Nom de l'entreprise</div> 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'Consultation_salles' %}">Salles</a>
+                        <a class="nav-link" href="{% url 'Consultation_salles' %} " style="color: #f8f9fa;"> Salles </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mes_reservations' %} " style="color: #f8f9fa;"> Historiques des réservations </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #f8f9fa;">
                             <i class="fas fa-user"></i> {{ user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            {% if user.is_superuser %}
-                            <li><a class="dropdown-item" href="/admin/">Administration</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="/logout/">Déconnexion</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %} " > <i class="fas fa-sign-out-alt"></i> Déconnexion </a></li>
                         </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">Connexion</a>
-                    </li>
-                    {% endif %}
                 </ul>
             </div>
         </div>

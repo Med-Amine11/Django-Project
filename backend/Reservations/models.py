@@ -1,7 +1,7 @@
 from django.db import models
+from django.forms import ValidationError
 from Salle.models import Salle
 from Users.models import Utilisateur
-from django.db.models import Q
 from datetime import datetime, timedelta
 
 class Reservation(models.Model):
@@ -9,7 +9,6 @@ class Reservation(models.Model):
         ('attente', 'En attente'),
         ('accepte', 'Acceptée'),
         ('refuse', 'Refusée'),
-        ('annule', 'Annulée'),
     ]
 
     utilisateur = models.ForeignKey(
@@ -34,10 +33,15 @@ class Reservation(models.Model):
         default='attente',
         verbose_name="État"
     )
-    
     def __str__(self):
-        return f"{self.utilisateur.firstname} - {self.salle.name} ({self.date_res} {self.heure_deb}-{self.heure_fin}) - ({self.etat})"
-    
+      return f'{self.id} - {self.utilisateur. first_name} {self.utilisateur.last_name}'
+  
+    def clean(self):
+        super().clean()  # Vérifie les contraintes de base
+        # Empêcher les admins de réserver
+        if hasattr(self, 'utilisateur') and self.utilisateur and (self.utilisateur.is_staff or self.utilisateur.is_superuser):
+             raise ValidationError("Les administrateurs ne sont pas autorisés à faire des réservations.")
+
     @classmethod
     def est_disponible(cls, salle_id, date_res, heure_deb, heure_fin, reservation_id=None):
         """
@@ -55,6 +59,7 @@ class Reservation(models.Model):
         """
         # Recherche des réservations qui se chevauchent
         # Une réservation se chevauche si elle n'est pas entièrement avant ou entièrement après
+         # Vérification des limites horaires
         reservations_chevauchantes = cls.objects.filter(
             salle_id=salle_id,
             date_res=date_res,
@@ -66,17 +71,12 @@ class Reservation(models.Model):
         ).exclude(
             # Exclure les réservations qui commencent après la fin de la nouvelle
             heure_deb__gte=heure_fin
-        )
-        
-        # Si on modifie une réservation existante, il faut l'exclure de la vérification
-        if reservation_id:
-            reservations_chevauchantes = reservations_chevauchantes.exclude(id=reservation_id)
-        
+        ).exclude(id = reservation_id) 
         # La salle est disponible s'il n'y a pas de réservations qui se chevauchent
         return not reservations_chevauchantes.exists()
-    
+
     @classmethod
-    def utilisateur_a_trop_de_reservations(cls, utilisateur_id, reservation_id=None):
+    def utilisateur_a_trop_de_reservations(cls, id):
         """
         Vérifie si l'utilisateur a déjà 3 réservations actives (en attente ou acceptées)
         
@@ -88,13 +88,9 @@ class Reservation(models.Model):
             bool: True si l'utilisateur a déjà 3 réservations actives
         """
         reservations = cls.objects.filter(
-            utilisateur_id=utilisateur_id,
-            etat__in=['attente', 'accepte']
+            utilisateur_id=id,
+            etat = 'attente'
         )
-        
-        if reservation_id:
-            reservations = reservations.exclude(id=reservation_id)
-        
         return reservations.count() >= 3
     
     def peut_annuler(self):
@@ -104,20 +100,20 @@ class Reservation(models.Model):
         Returns:
             bool: True si la réservation peut être annulée
         """
-        if self.etat not in ['attente', 'accepte']:
-            return False
+        if self.etat  == 'attente'  :
+            return True
+        elif self.etat == 'accepte' :
+            # Calculer la date et l'heure de la réservation
+           date_heure_reservation = datetime.combine(self.date_res, self.heure_deb)
         
-        # Calculer la date et l'heure de la réservation
-        date_heure_reservation = datetime.combine(self.date_res, self.heure_deb)
+            # Calculer la date et l'heure actuelle
+           now = datetime.now()
         
-        # Calculer la date et l'heure actuelle
-        now = datetime.now()
+           # Calculer la différence
+           diff = date_heure_reservation - now
         
-        # Calculer la différence
-        diff = date_heure_reservation - now
-        
-        # Vérifier si la différence est d'au moins 24 heures
-        return diff > timedelta(hours=24)
+          # Vérifier si la différence est d'au moins 24 heures
+           return diff > timedelta(hours=24)
     
     def peut_modifier(self):
         """

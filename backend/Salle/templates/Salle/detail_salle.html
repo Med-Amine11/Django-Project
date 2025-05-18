@@ -4,84 +4,122 @@
 
 {% block extrahead %}
 
-<style> .calendar-container { background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 20px; } .calendar-day { border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 10px; background-color: #fff; } .calendar-day-header { font-weight: bold; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; margin-bottom: 10px; } .reservation-item { background-color: #e9ecef; border-radius: 5px; padding: 8px; margin-bottom: 8px; } .reservation-time { font-weight: bold; } .no-reservations { color: #28a745; font-style: italic; } .reservation-card { border-left: 4px solid #007bff; } .equipement-badge { margin-right: 5px; margin-bottom: 5px; } /* Style pour les équipements avec images */ .equipement-card { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 15px; transition: transform 0.2s; } .equipement-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); } .equipement-img { height: 120px; object-fit: cover; border-top-left-radius: 8px; border-top-right-radius: 8px; } .equipement-name { padding: 10px; text-align: center; font-weight: bold; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; } </style>
+<style>
+    .reservation-item {
+        background-color: #e9ecef;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .reservation-time {
+        font-weight: bold;
+    }
+
+    .no-reservations {
+        color: #28a745;
+        font-style: italic;
+    }
+
+    .reservation-card {
+        border-left: 4px solid #007bff;
+    }
+
+    .equipement-badge {
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+
+    /* Style pour les équipements avec images */
+    .equipement-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: transform 0.2s;
+    }
+
+    .equipement-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .equipement-img {
+        height: 120px;
+        object-fit: cover;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .equipement-name {
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
-<div class="container mt-5"> <nav aria-label="breadcrumb"> <ol class="breadcrumb"> <li class="breadcrumb-item"><a href="{% url 'Consultation_salles' %}">Salles</a></li> <li class="breadcrumb-item active" aria-current="page">{{ salle.name }}</li> </ol> </nav>
-<div class="row">
-    <div class="col-md-6">
-        {% if salle.image %}
-        <img src="{{ salle.image.url }}" class="img-fluid rounded" alt="{{ salle.name }}">
-        {% endif %}
-    </div>
-    <div class="col-md-6">
-        <h1>{{ salle.name }}</h1>
-        <p class="lead">Capacité: {{ salle.capacity }} personnes</p>
-        <div class="card mb-3">
-            <div class="card-header">Description</div>
-            <div class="card-body">
-                <p class="card-text">{{ salle.description }}</p>
+<div class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'Consultation_salles' %}">Salles</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ salle.name }}</li>
+        </ol>
+    </nav>
+    <div class="row">
+        <div class="col-md-6 d-flex align-items-center justify-content-center">
+            {% if salle.image %}
+            <div style="width: 100%; height: 400px; overflow: hidden; border-radius: 10px;">
+                <img src="{{ salle.image.url }}" class="img-fluid w-100 h-100" alt="{{ salle.name }}"
+                    style="object-fit: cover;">
             </div>
-        </div>
-        
-        <a href="{% url 'effectuer_reservation' %}?salle_id={{ salle.id }}" class="btn btn-primary btn-lg">Réserver cette salle</a>
-    </div>
-</div>
-
-<!-- Section des équipements avec images -->
-{% if salle.equipements.all %}
-<div class="card mt-4">
-    <div class="card-header">
-        <h3>Équipements disponibles</h3>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            {% for equipement in salle.equipements.all %}
-            <div class="col-md-3 col-sm-6 mb-3">
-                <div class="equipement-card">
-                    {% if equipement.image %}
-                    <img src="{{ equipement.image.url }}" class="img-fluid equipement-img w-100" alt="{{ equipement.name }}">
-                    {% endif %}
-                    <div class="equipement-name">{{ equipement.name }}</div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% else %}
-<div class="alert alert-info mt-4">
-    Cette salle ne possède aucun équipement pour le moment.
-</div>
-{% endif %}
-
-<div class="calendar-container">
-    <h2 class="mb-4">Calendrier de disponibilité ({{ today|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }})</h2>
-    
-    {% for day in calendar_data %}
-    <div class="calendar-day">
-        <div class="calendar-day-header">
-            {{ day.date|date:"l d/m/Y" }}
-        </div>
-        
-        <div class="calendar-day-content">
-            {% if day.reservations %}
-                {% for reservation in day.reservations %}
-                <div class="reservation-item">
-                    <div class="reservation-time">{{ reservation.heure_deb|time:"H:i" }} - {{ reservation.heure_fin|time:"H:i" }}</div>
-                    <div>{{ reservation.motif|truncatewords:10 }}</div>
-                    <div><small class="text-muted">État: {{ reservation.get_etat_display }}</small></div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="no-reservations">Aucune réservation pour ce jour</div>
             {% endif %}
         </div>
+        <div class="col-md-6">
+            <h1>{{ salle.name }}</h1>
+            <p class="lead">Capacité : {{ salle.capacity }} personnes</p>
+            <div class="card mb-3">
+                <div class="card-header">Description</div>
+                <div class="card-body">
+                    <p class="card-text">{{ salle.description }}</p>
+                </div>
+            </div>
+            <a href="{% url 'effectuer_reservation' salle.id %}" class="btn btn-primary btn-lg">Réserver cette salle</a>
+        </div>
     </div>
-    {% endfor %}
-</div>
+
+    {% if salle.equipements_salle.all %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>Équipements disponibles</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for equipements in salle.equipements_salle.all %}
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="equipement-card text-center shadow-sm p-2 rounded" style="background-color: #f8f9fa;">
+                        {% if equipements.equipement.image %}
+                        <div style="width: 100%; height: 150px; overflow: hidden; border-radius: 8px;">
+                            <img src="{{ equipements.equipement.image.url }}" class="img-fluid w-100 h-100"
+                                alt="{{ equipements.equipement.name }}" style="object-fit: cover;">
+                        </div>
+                        {% endif %}
+                        <div class="mt-2 fw-bold">{{ equipements.equipement.name }}</div>
+                        <div class="text-muted">Quantité : {{ equipements.quantite }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-4">
+        Cette salle ne possède aucun équipement pour le moment.
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-

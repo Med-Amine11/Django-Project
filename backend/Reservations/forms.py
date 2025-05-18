@@ -28,16 +28,22 @@ class ReservationForm(forms.ModelForm):
         if date_res and date_res < today:
             raise ValidationError("Impossible de réserver une date passée.")
         
+        # Interdire les réservations le week-end
+        if date_res and date_res.weekday() >= 5:  # 5 = samedi, 6 = dimanche
+            raise ValidationError("Les réservations ne sont pas autorisées le week-end (samedi ou dimanche).")
+        
+        # La réservation doit être effectuée au moins 7 jours à l'avance
+        if date_res:
+            if (date_res - today).days > 7:
+                raise ValidationError("Les réservations doivent être faites au moins 7 jours à l'avance.")
+            
         # Vérifier que l'heure de fin est après l'heure de début
         if heure_deb and heure_fin and heure_fin <= heure_deb:
             raise ValidationError("L'heure de fin doit être après l'heure de début.")
         
         # Vérifier que l'heure de réservation est raisonnable (ex: entre 8h et 22h)
-        if heure_deb and (heure_deb.hour < 8 or heure_deb.hour >= 22):
+        if heure_deb and heure_fin  and (heure_deb.hour < 8 or heure_deb.hour >= 22):
             raise ValidationError("Les réservations sont possibles uniquement entre 8h et 22h.")
-        
-        if heure_fin and heure_fin.hour > 22:
-            raise ValidationError("Les réservations doivent se terminer avant 22h.")
         
         # Durée minimale et maximale
         if heure_deb and heure_fin:

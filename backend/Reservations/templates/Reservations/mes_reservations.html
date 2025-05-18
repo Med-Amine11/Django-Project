@@ -14,8 +14,6 @@
 {% endif %}
 
 <div class="d-flex justify-content-between mb-4">
-    <a href="{% url 'Consultation_salles' %}" class="btn btn-primary">Consulter les salles</a>
-    
     {% if reservations_actives < 3 %}
         <div class="alert alert-info mb-0 py-2">
             <i class="fas fa-info-circle"></i> Vous avez {{ reservations_actives }} réservation(s) active(s) sur un maximum de 3 autorisées.
@@ -53,7 +51,7 @@
                                     <a href="{% url 'annuler_reservation' reservation.id %}" class="btn btn-danger">Annuler</a>
                                 {% endif %}
                                 
-                                {% if not reservation.peut_etre_annulee and not reservation.peut_etre_modifiee %}
+                                {% if not reservation.peut_etre_annulee  %}
                                     <p class="text-warning"><i class="fas fa-exclamation-circle"></i> Cette réservation ne peut plus être modifiée ou annulée car elle est prévue dans moins de 24h.</p>
                                 {% endif %}
                             </div>
@@ -65,7 +63,7 @@
     </div>
 {% else %}
     <div class="alert alert-info">
-        Vous n'avez pas encore de réservations. <a href="{% url 'Consultation_salles' %}">Voir les salles disponibles</a>
+        Vous n'avez pas encore de réservations.
     </div>
 {% endif %}
 </div>

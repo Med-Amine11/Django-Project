@@ -9,17 +9,17 @@
     <div class="row">
         {% for salle in salles %}
         <div class="col-md-4 mb-4">
-            <div class="card">
+            <div class="card h-100 d-flex flex-column">
                 {% if salle.image %}
-                <img src="{{ salle.image.url }}" class="card-img-top" alt="{{ salle.name }}">
+                <img src="{{ salle.image.url }}" class="card-img-top" alt="{{ salle.name }}" style="height: 200px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ salle.name }}</h5>
                     <p class="card-text">
-                        <strong>Capacité:</strong> {{ salle.capacity }} personnes<br>
+                        <strong>Capacité :</strong> {{ salle.capacity }} personnes<br>
                         <span class="text-truncate d-block">{{ salle.description|truncatewords:20 }}</span>
                     </p>
-                    <a href="{% url 'detail_salle' salle.slug %}" class="btn btn-primary">Voir les détails</a>
+                    <a href="{% url 'detail_salle' salle.slug %}" class="btn btn-primary  ">Voir les détails</a>
                 </div>
             </div>
         </div>

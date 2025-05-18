@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/',include('Users.urls')) ,  # Chercher dans la suite Users.urls
     path('Salles/',include('Salle.urls')) , 
+    path('Reserver/' , include('Reservations.urls') ) , 
 ]
 
-urlpatterns += static(settings.MEDIA_URL , document_root = settings.MEDIA_ROOT ) # permet de servir des fichiers statiques 
+urlpatterns += static(settings.MEDIA_URL , document_root = settings.MEDIA_ROOT ) # permet de servir des fichiers statiques

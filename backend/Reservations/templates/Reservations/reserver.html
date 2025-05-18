@@ -1,176 +1,197 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation de salle</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .calendar-container {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .calendar-day {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            background-color: #fff;
-        }
-        
-        .calendar-day-header {
-            font-weight: bold;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .current-day {
-            background-color: #e8f4ff;
-        }
-        
-        .reservation-item {
-            background-color: #e9ecef;
-            border-radius: 5px;
-            padding: 8px;
-            margin-bottom: 8px;
-        }
-        
-        .reservation-time {
-            font-weight: bold;
-        }
-        
-        .no-reservations {
-            color: #28a745;
-            font-style: italic;
-        }
-        
-        .equipement-badge {
-            margin-right: 5px;
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <!-- Titre de la page -->
-        <h1 class="mb-4">Effectuer une Réservation</h1>
-        
-        <!-- Messages d'information ou d'erreur -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}" role="alert">
-                    {{ message }}
+{% extends "base.html" %}
+
+{% block title %}Réservation de salle{% endblock %}
+
+{% block extrahead %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    #app-calendar {
+
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 5px;
+    }
+
+    .day {
+        text-align: center;
+        border: 0.5px solid #ccc;
+        height: 150px;
+        font-weight: bold;
+    }
+
+    #days-list {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-around;
+        font-weight: bolder;
+    }
+
+    .day-name {
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Effectuer une Réservation</h1>
+
+    <div class="row">
+        {% if salle %}
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ salle.name }}</h5>
                 </div>
-            {% endfor %}
+                {% if salle.image %}
+                <img src="{{ salle.image.url }}" class="card-img-top" alt="{{ salle.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <p><strong>Capacité : </strong> {{ salle.capacity }} personnes</p>
+                    <p><strong>Description : </strong> {{ salle.description }}</p>
+                </div>
+            </div>
+        </div>
         {% endif %}
-        
-        <div class="row">
-            <!-- Détails de la salle (si une salle est sélectionnée) -->
-            {% if salle %}
-            <div class="col-md-5">
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">{{ salle.name }}</h5>
-                    </div>
-                    {% if salle.image %}
-                    <img src="{{ salle.image.url }}" class="card-img-top" alt="{{ salle.name }}">
-                    {% endif %}
-                    <div class="card-body">
-                        <p><strong>Capacité:</strong> {{ salle.capacity }} personnes</p>
-                        <p><strong>Description:</strong> {{ salle.description }}</p>
-                        
-                        {% if salle.equipements.all %}
-                        <p><strong>Équipements:</strong></p>
-                        <div>
-                            {% for equipement in salle.equipements.all %}
-                            <span class="badge bg-secondary equipement-badge">{{ equipement.name }}</span>
+
+        <div class="{% if salle %}col-md-7{% else %}col-md-12{% endif %}">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Formulaire de réservation</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
                             {% endfor %}
                         </div>
                         {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Formulaire de réservation -->
-            <div class="{% if salle %}col-md-7{% else %}col-md-12{% endif %}">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">Formulaire de réservation</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="post">
-                            {% csrf_token %}
-                            
-                            {% if form.non_field_errors %}
-                                <div class="alert alert-danger">
-                                    {% for error in form.non_field_errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            
-                            {% for field in form %}
-                                <div class="mb-3">
-                                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                        <div class="text-danger">
-                                            {% for error in field.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">Réserver</button>
-                                <a href="{% url 'Consultation_salles' %}" class="btn btn-secondary">Annuler</a>
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger">
+                                {% for error in field.errors %}
+                                {{ error }}
+                                {% endfor %}
                             </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Calendrier des disponibilités (si une salle est sélectionnée) -->
-        {% if salle %}
-        <div class="calendar-container mt-4">
-            <h2 class="mb-4">Disponibilités de la semaine</h2>
-            
-            {% for day in calendar_data %}
-            <div class="calendar-day {% if day.is_today %}current-day{% endif %}">
-                <div class="calendar-day-header">
-                    {{ day.date|date:"l d/m/Y" }} {% if day.is_today %}<span class="badge bg-primary">Aujourd'hui</span>{% endif %}
-                </div>
-                
-                <div class="calendar-day-content">
-                    {% if day.reservations %}
-                        {% for reservation in day.reservations %}
-                        <div class="reservation-item">
-                            <div class="reservation-time">{{ reservation.heure_deb|time:"H:i" }} - {{ reservation.heure_fin|time:"H:i" }}</div>
-                            <div>{{ reservation.motif|truncatewords:10 }}</div>
-                            <div><small class="text-muted">État: {{ reservation.get_etat_display }}</small></div>
+                            {% endif %}
                         </div>
                         {% endfor %}
-                    {% else %}
-                        <div class="no-reservations">
-                            <i class="fas fa-check-circle"></i> Aucune réservation pour ce jour - Entièrement disponible
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Réserver</button>
+                            <a href="{% url 'Consultation_salles' %}" class="btn btn-secondary">Annuler</a>
                         </div>
-                    {% endif %}
+                    </form>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% endif %}
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div id="days-list"></div>
+    <div id="app-calendar">
+    </div>
+</div>
+<script>
+    const calendarData = {{ calendar_data_json| safe }};
+    console.log(calendarData)
+    const days_list = document.querySelector("#days-list");
+
+    days = get_days()
+
+    for (let i = 0; i < 7; i++) {
+        const div = document.createElement("div");
+        div.classList.add("day-name");  // classe spécifique pour les jours de la semaine
+        div.textContent = days[i];
+        days_list.appendChild(div);
+    }
+    const calendar = document.querySelector("#app-calendar")
+    dernier_jour = get_the_last_day()
+    for (let day = 1; day <= dernier_jour; day++) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+
+        const div = document.createElement("div");
+        div.classList.add("day");
+        div.textContent = day;
+        // Construire la date formatée "YYYY-MM-DD"
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        // Chercher les réservations pour cette date dans calendarData
+        const dayData = calendarData.find(d => d.date === dateStr);
+
+        if (dayData && dayData.reservations.length > 0) {
+            // Créer un conteneur pour les réservations
+            const resContainer = document.createElement("div");
+            resContainer.classList.add("reservations-container");
+
+            dayData.reservations.forEach(res => {
+                const resDiv = document.createElement("div");
+                resDiv.classList.add("reservation-item");
+                resDiv.textContent = `${res.debut} - ${res.fin}`;
+                resDiv.style.color = "white";
+                resDiv.style.backgroundColor = "#007bff"; // bleu bootstrap ou autre couleur
+                resDiv.style.marginTop = "3px";
+                resDiv.style.padding = "2px 4px";
+                resDiv.style.borderRadius = "4px";
+                resDiv.style.fontSize = "0.8em";
+
+                resContainer.appendChild(resDiv);
+            });
+
+            div.appendChild(document.createElement("br"));
+            div.appendChild(resContainer);
+        }
+
+        calendar.appendChild(div);
+    }
+    function get_the_last_day() {
+        const aujourdHui = new Date();
+        const mois = aujourdHui.getMonth() + 1; // getMonth() retourne 0 pour janvier, donc +1
+        console.log(get_days())
+        if (mois === 4 || mois === 6 || mois === 9 || mois === 11) {
+            return 30;
+        } else if (mois === 2) {
+            const annee = aujourdHui.getFullYear();
+            // Vérifie si l'année est bissextile correctement
+            if ((annee % 4 === 0 && annee % 100 !== 0) || (annee % 400 === 0)) {
+                return 29;
+            } else {
+                return 28;
+            }
+        } else {
+            return 31;
+        }
+    }
+
+    function get_days() {
+        const aujourdHui = new Date();
+        const annee = aujourdHui.getFullYear();
+        const mois = aujourdHui.getMonth();
+        const premierJourDuMois = new Date(annee, mois, 1);
+        const jourSemaine = premierJourDuMois.getDay(); // nombre 0 à 6
+        const days = ["Sun", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+        for (let i = 0; i < jourSemaine; i++) {
+            days.push(days.shift());
+        }
+        return days;
+    }
+
+
+
+</script>
+
+{% endblock %}

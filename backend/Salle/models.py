@@ -1,11 +1,11 @@
 import shutil
-from autoslug import AutoSlugField # type: ignore
-from django.db import models # type: ignore
+from autoslug import AutoSlugField 
+from django.db import models 
 import os
-from django.utils.text import slugify # type: ignore
-from django.db.models.signals import pre_save , post_delete , post_save # type: ignore
-from django.dispatch import receiver # type: ignore
-
+from django.utils.text import slugify 
+from django.db.models.signals import pre_save , post_delete , post_save 
+from django.dispatch import receiver 
+from django.core.exceptions import ValidationError
 def salle_image_path(instance, filename):
     return os.path.join('Salle', slugify(instance.name), filename)
 
@@ -20,7 +20,7 @@ class Salle(models.Model):
         blank=False
     )
     slug =  AutoSlugField(populate_from='name', unique=True)
-    capacity = models.IntegerField(verbose_name="Capacité")
+    capacity = models.PositiveIntegerField(verbose_name="Capacité" ) 
     description = models.TextField(verbose_name="Description")
     image = models.ImageField(upload_to=salle_image_path)
 
@@ -83,15 +83,11 @@ class Equipement(models.Model):
         blank=False
     )
     slug = AutoSlugField(populate_from='name', unique=True)
-    salle = models.ForeignKey(
-        Salle,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='equipements',
-        verbose_name="Salle associée"
-    )
-    image = models.ImageField(upload_to=equipement_image_path ) 
-
+    couleur = models.CharField(max_length=150 , verbose_name="Couleur de l'equipement")
+    description = models.CharField(max_length=255, blank = True,verbose_name="Description")
+    Stock_Total = models.PositiveIntegerField(verbose_name="Stock total")   
+    image = models.ImageField(upload_to=equipement_image_path , verbose_name='Image' ) 
+    
     def __str__(self):
         return self.name
     
@@ -138,3 +134,19 @@ def handle_Equipement_change_images(sender , instance , **kwargs) :
             if fichier != image_name : 
                 
                 os.remove(chemin_fichier)
+                
+                
+class Equipements_Salle(models.Model) : 
+    salle = models.ForeignKey(Salle, on_delete=models.CASCADE, related_name='equipements_salle')
+    equipement = models.ForeignKey(Equipement, on_delete=models.CASCADE, related_name='salles')
+    quantite = models.PositiveIntegerField(verbose_name="Quantite dans la salle")
+    
+    
+    def __str__(self):
+        return f"{self.equipement.name} ({self.quantite}) dans {self.salle.name}"
+
+
+@receiver(pre_save, sender=Equipements_Salle)
+def check_quantite_vs_stock(sender, instance, **kwargs):
+    if instance.quantite > instance.equipement.Stock_Total:
+        raise ValidationError("La quantité dépasse le stock total disponible.")
