@@ -2,7 +2,7 @@ from django.db import models
 from django.forms import ValidationError
 from Salle.models import Salle
 from Users.models import Utilisateur
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 class Reservation(models.Model):
     ETAT_CHOICES = [
@@ -89,7 +89,8 @@ class Reservation(models.Model):
         """
         reservations = cls.objects.filter(
             utilisateur_id=id,
-            etat = 'attente'
+            etat = 'accepte'  ,
+            heure_deb__gt= date.today().strftime('%H:%M') 
         )
         return reservations.count() >= 3
     

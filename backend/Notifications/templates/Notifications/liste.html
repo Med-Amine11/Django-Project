@@ -2,26 +2,43 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">📬 Mes notifications</h2>
+    <h2 class="mb-4">
+        <i class="fas fa-bell text-warning me-2"></i>Mes notifications
+    </h2>
 
     {% if notifications %}
-        <div class="list-group shadow-sm">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             {% for notif in notifications %}
-                <div class="list-group-item list-group-item-action mb-2 border rounded">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1 text-primary">
-                            <i class="fas fa-bell"></i> {{ notif.type }}
-                        </h5>
-                        <small class="text-muted">{{ notif.date_envoi|date:"d/m/Y H:i" }}</small>
+                <div class="col">
+                    <div class="card shadow-sm h-100 border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge 
+                                    {% if notif.type == 'Alerte' %}
+                                        bg-danger
+                                    {% elif notif.type == 'Info' %}
+                                        bg-info
+                                    {% elif notif.type == 'Succès' %}
+                                        bg-success
+                                    {% else %}
+                                        bg-secondary
+                                    {% endif %}
+                                    text-light px-3 py-2 rounded-pill text-uppercase">
+                                    <i class="fas fa-bell me-1"></i>{{ notif.type }}
+                                </span>
+                                <small class="text-muted">{{ notif.date_envoi|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <p class="card-text mb-0">{{ notif.message }}</p>
+                        </div>
                     </div>
-                    <p class="mb-1">{{ notif.message }}</p>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> Aucune notification pour le moment.
+        <div class="alert alert-info mt-4" role="alert">
+            <i class="fas fa-info-circle me-2"></i>Aucune notification pour le moment.
         </div>
     {% endif %}
 </div>
 {% endblock %}
+

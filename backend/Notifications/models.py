@@ -21,4 +21,4 @@ class Notification(models.Model):
     
     
     def __str__(self):
-        return f"Notification à {self.utilisateur.name} pour la réservation {self.reservation.id}"
+        return f"Notification à {self.utilisateur.last_name}  {self.utilisateur.first_name} pour la réservation {self.reservation.id}"

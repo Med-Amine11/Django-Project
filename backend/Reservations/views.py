@@ -12,80 +12,85 @@ from Salle.models import Salle  # Assure-toi que ce chemin est correct
 
 @login_required
 def effectuer_reservation(request, salle_id):
-    # Étape 1 : Limite de réservations actives
+    # Vérifier si l'utilisateur a déjà 3 réservations actives
     if Reservation.utilisateur_a_trop_de_reservations(request.user.id):
-        messages.error(request, "Vous avez déjà 3 réservations actives.")
+        messages.error(
+            request,
+            "Vous avez déjà 3 réservations actives. Vous ne pouvez pas avoir plus de 3 réservations à la fois."
+        )
         return redirect('mes_reservations')
 
-    # Étape 2 : Récupération de la salle depuis l'URL
     salle = get_object_or_404(Salle, id=salle_id)
-
-    # Étape 3 : Générer le calendrier des réservations
     calendar_data = []
+
+    # Préparer le calendrier de disponibilité pour la semaine
     today = date.today()
 
-    # Sauter samedi (5) et dimanche (6)
     if today.weekday() == 5:
         today += timedelta(days=2)
     elif today.weekday() == 6:
         today += timedelta(days=1)
 
     end_date = today + timedelta(days=7)
+    current_date = today
+
+    # Récupérer toutes les réservations pour cette salle sur la période
     reservations = Reservation.objects.filter(
         salle=salle,
-        date_res__range=(today, end_date),
-        etat='accepte'
+        date_res__gte=today,
+        date_res__lte=end_date,
+        etat='accepte'  # Seulement les réservations acceptées
     ).order_by('date_res', 'heure_deb')
 
-    current_date = today
     while current_date < end_date:
-        if current_date.weekday() < 5:  # Lundi à vendredi
+        if current_date.weekday() < 5:
+            # Filtrer les réservations pour ce jour
             day_reservations = reservations.filter(date_res=current_date)
+            # Convertir chaque réservation en dict sérialisable
+            serialized_reservations = []
+            for res in day_reservations:
+                serialized_reservations.append({
+                    'debut': res.heure_deb.strftime('%H:%M'),
+                    'fin': res.heure_fin.strftime('%H:%M'),
+                })
             calendar_data.append({
-                'date': current_date,
-                'weekday': current_date.strftime('%A'),
-                'reservations': day_reservations,
-                'is_today': current_date == today
+                'date': current_date.strftime('%Y-%m-%d'),
+                'reservations': serialized_reservations,
             })
         current_date += timedelta(days=1)
 
-    # Étape 4 : Traitement du formulaire
     if request.method == 'POST':
         form = ReservationForm(request.POST)
         if form.is_valid():
             reservation = form.save(commit=False)
-            reservation.utilisateur = request.user
-
+            # Vérifier la disponibilité
             if Reservation.est_disponible(
                 salle_id=reservation.salle.id,
                 date_res=reservation.date_res,
                 heure_deb=reservation.heure_deb,
                 heure_fin=reservation.heure_fin
             ):
+                reservation.utilisateur = request.user  # <-- correction ici
                 reservation.save()
-                messages.success(request, "Réservation effectuée avec succès. En attente de validation.")
+                messages.success(
+                    request,
+                    "Votre réservation a été effectuée avec succès et est en attente de validation."
+                )
                 return redirect('mes_reservations')
             else:
-                messages.error(request, "La salle n'est pas disponible aux horaires sélectionnés.")
+                messages.error(
+                    request,
+                    "La salle n'est pas disponible aux horaires sélectionnés."
+                )
     else:
-        form = ReservationForm(initial={'salle': salle_id})
+        # Pour un nouveau formulaire, on préremplit la salle si elle est fournie
+        initial = {'salle': salle_id} if salle_id else {}
+        form = ReservationForm(initial=initial)
 
-    # Étape 5 : Rendu
     context = {
         'form': form,
         'salle': salle,
-        'calendar_data': calendar_data,
-        'calendar_data_json': mark_safe(json.dumps([
-            {
-                'date': day['date'].strftime('%Y-%m-%d'),
-                'reservations': [
-                    {
-                        'debut': res.heure_deb.strftime('%H:%M'),
-                        'fin': res.heure_fin.strftime('%H:%M')
-                    } for res in day['reservations']
-                ]
-            } for day in calendar_data
-        ]))
+        'calendar_data_json': mark_safe(json.dumps(calendar_data))
     }
 
     return render(request, 'Reservations/reserver.html', context)
@@ -108,7 +113,8 @@ def mes_reservations(request):
     # Compter les réservations actives
     reservations_actives = Reservation.objects.filter(
         utilisateur=request.user,
-        etat__in=['attente', 'accepte']
+        etat ='accepte',
+        heure_deb__gt= date.today().strftime('%H:%M')
     ).count()
     
     context = {
@@ -122,7 +128,7 @@ def mes_reservations(request):
 @login_required
 def annuler_reservation(request, reservation_id):
     # Récupérer la réservation ou retourner une erreur 404
-    reservation = get_object_or_404(Reservation, id=reservation_id, utilisateur=request.user)
+    reservation = get_object_or_404(Reservation, id=reservation_id)
     
     # Vérifier si la réservation peut être annulée
     if not reservation.peut_annuler():
@@ -130,13 +136,13 @@ def annuler_reservation(request, reservation_id):
         return redirect('mes_reservations')
     
     if request.method == 'POST':
-        # Suppression de la réservation
-        reservation.delete()
+        reservation.etat = "annule"
+        reservation.save()
         messages.success(request, "Votre réservation a été annulée avec succès.")
         return redirect('mes_reservations')
     
     context = {
-        'reservations': reservation
+        'reservation': reservation
     }
     
     return render(request, 'Reservations/annuler_reservation.html', context)
@@ -180,16 +186,17 @@ def modifier_reservation(request, reservation_id):
     # Créer les données du calendrier
     current_date = today
     while current_date <= end_date:
+        if current_date.weekday() < 5:
         # Filtrer les réservations pour ce jour
-        day_reservations = reservations.filter(date_res=current_date)
+          day_reservations = reservations.filter(date_res=current_date)
        # Convertir chaque réservation en dict sérialisable
-        serialized_reservations = []
-        for res in day_reservations:
+          serialized_reservations = []
+          for res in day_reservations:
             serialized_reservations.append({
                 'debut': res.heure_deb.strftime('%H:%M'),
                 'fin': res.heure_fin.strftime('%H:%M'),
             })
-        calendar_data.append({
+          calendar_data.append({
             'date': current_date.strftime('%Y-%m-%d'),
             'reservations': serialized_reservations,
             })
